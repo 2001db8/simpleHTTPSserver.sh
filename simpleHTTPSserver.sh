@@ -29,10 +29,6 @@ OPT_O=""                        # for option checking
 OPT_2=""                        # for option checking
 OPT_3=""                        # for option checking
 
-# First of all, check if OpenSSL was found
-
-[[ -z $OPENSSL ]] && ($ECHO "OpenSSL not installed or not in path. Giving up."; exit 1)
-
 # Functions
 
 usage() {
@@ -131,6 +127,14 @@ openssl_serv() {
                 $OPENSSL s_server -no_ssl2 -no_ssl3 -WWW -cert "$TMPCERT" -key "$TMPKEY" -accept "$PORT"
         fi
 }
+
+# First of all, check if OpenSSL was found
+
+if [[ -z $OPENSSL ]]
+then
+        $ECHO "OpenSSL not installed or not in path. Giving up."
+        exit 1
+fi
 
 # Get options
 
