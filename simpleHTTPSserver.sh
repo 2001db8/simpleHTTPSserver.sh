@@ -132,7 +132,7 @@ openssl_serv() {
 
 if [[ -z $OPENSSL ]]
 then
-        $ECHO "OpenSSL not installed or not in path. Giving up."
+        $ECHO -e "\nOpenSSL not installed or not in path. Giving up."
         exit 1
 fi
 
