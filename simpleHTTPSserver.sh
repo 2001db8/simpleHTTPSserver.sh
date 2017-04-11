@@ -71,7 +71,7 @@ cleanup() {
 
         # Check if the HTTPS server is still running in case this script
         # got killed and we ended up with a zombie HTTPS server
-        [[ -v "$TMPCERT" ]] && local ZOMBIE=$($PGREP -f $($BASENAME $TMPCERT))
+        [[ -n "$TMPCERT" ]] && local ZOMBIE=$($PGREP -f $($BASENAME $TMPCERT))
         [[ -n "$ZOMBIE" ]] && ($ECHO -en "\nZombie HTTPS server detected. Going full Daryl Dixon on it... "; \
          $KILL -9 $ZOMBIE > /dev/null 2>&1 && $ECHO -e "${GREEN}success${NC}:\n" || \
          $ECHO -e "${RED}FAILED${NC}! Please kill PID ${RED}$ZOMBIE${NC} by hand.")
