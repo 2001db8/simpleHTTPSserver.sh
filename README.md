@@ -23,4 +23,4 @@ Options:
 -p [port]    Define the port to listen on. Default port is 4443.
 ```
 
-Tested on linux and FreeBSD.
+Tested on Linux and FreeBSD.
