@@ -17,6 +17,8 @@ readonly ECHO=$(command -v echo)
 readonly DAYS="1"
 readonly PGREP=$(command -v pgrep)
 readonly KILL=$(command -v kill)
+readonly RM=$(command -v rm)
+readonly UNAME=(command -v uname)
 
 RED='\033[0;31m'                # some colors
 GREEN='\033[0;32m'
@@ -28,6 +30,16 @@ PORT="4443"                     # default port the server will listen on
 OPT_O=""                        # for option checking
 OPT_2=""                        # for option checking
 OPT_3=""                        # for option checking
+
+# Get OS and set rm option
+
+OS=$($UNAME)
+if [[ $OS == "Darwin" ]]
+then
+        RMOPT=""                # I'd prefer "-I" but MacOS rm does not know that
+else
+        RMOPT="-I"              # We all remember Steam for Linux Bug #3671, right?
+fi
 
 # Functions
 
@@ -62,11 +74,11 @@ make_cert() {
 cleanup() {
         # Remove temporary files
         [[ -e "$TMPKEY" ]] && ($ECHO -en "\n\nRemoving temporary key... "; \
-         rm -I "$TMPKEY" 2> /dev/null && $ECHO -e "${GREEN}success${NC}." || \
+         $RM $RMOPT "$TMPKEY" 2> /dev/null && $ECHO -e "${GREEN}success${NC}." || \
          $ECHO -e "${RED}FAILED${NC}! Please remove file ${RED}$TMPKEY${NC} by hand.")
 
         [[ -e "$TMPCERT" ]] && ($ECHO -en "Removing temporary certificate... "; \
-         rm -I "$TMPCERT" 2> /dev/null && $ECHO -e "${GREEN}success${NC}." || \
+         $RM $RMOPT "$TMPCERT" 2> /dev/null && $ECHO -e "${GREEN}success${NC}." || \
          $ECHO -e "${RED}FAILED${NC}! Please remove file ${RED}$TMPCERT${NC} by hand.")
 
         # Check if the HTTPS server is still running in case this script
@@ -80,7 +92,7 @@ cleanup() {
 python2serv() {
         if [[ "$OPT_2" -eq 1 ]] && [[ -n "$OPT_O" || -n "$OPT_O" ]]
         then
-                $ECHO "$PROG_NAME: Multipe server options detected."  >&2
+                $ECHO "\n$PROG_NAME: Multipe server options detected."  >&2
                 usage
         elif [[ -z $PYTHON2 ]]
         then
@@ -100,7 +112,7 @@ python2serv() {
 python3serv() {
         if [[ "$OPT_3" -eq 1 ]] && [[ -n "$OPT_2" || -n "$OPT_O" ]]
         then
-                $ECHO -e "$PROG_NAME: Multipe server options detected."  >&2
+                $ECHO -e "\n$PROG_NAME: Multipe server options detected."  >&2
                 usage
         elif [[ -z $PYTHON3 ]]
         then
@@ -120,7 +132,7 @@ python3serv() {
 openssl_serv() {
         if [[ "$OPT_O" -eq 1 ]] && [[ -n "$OPT_2" || -n "$OPT_3" ]]
         then
-                echo "$PROG_NAME: Multipe server options detected."  >&2 && usage
+                $ECHO -e "\n$PROG_NAME: Multipe server options detected."  >&2 && usage
         else
                 make_cert
                 $ECHO -e "\nStarting HTTPS server on port ${BOLD}$PORT${NC} with ${BOLD}OpenSSL${NC}.\n\nStop server with CTRL+C.\n"
@@ -132,13 +144,13 @@ openssl_serv() {
 
 if [[ -z $OPENSSL ]]
 then
-        $ECHO -e "\nOpenSSL not installed or not in path. Giving up."
+        $ECHO "OpenSSL not installed or not in path. Giving up."
         exit 1
 fi
 
 # Get options
 
-while getopts ":hp:o23" OPTION
+while getopts ":ho23p:" OPTION
 do
   case $OPTION in
         o)
@@ -154,14 +166,25 @@ do
         OPT_3="1"
         ;;
         p)
-        PORT="$2"
+        if [[ $port =~ ^[0-9]+$ && $port -gt 0 && $port -lt 65535 ]]; then
+         PORT="$OPTARG"
+        else
+         $ECHO -e "\n$PROG_NAME: $OPTARG is not a valid port."
+         usage
+         exit 1
+        fi
         ;;
         h)
         usage
         exit 0
         ;;
         \?)
-        echo "$PROG_NAME: illegal option -- $OPTARG" >&2
+        $ECHO -e "\n$PROG_NAME: Illegal option -- -$OPTARG" >&2
+        usage
+        exit 1
+        ;;
+        :)
+        $ECHO -e "\n$PROG_NAME: Option -$OPTARG requires an argument." >&2
         usage
         exit 1
         ;;
